@@ -1,0 +1,27 @@
+{
+  "name": "guildpass-core",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev": "npm run -w access-api dev",
+    "test": "npm run -ws test",
+    "lint": "npm run -ws lint",
+    "typecheck": "npm run -ws typecheck",
+    "seed": "npm run -w access-api seed",
+    "start": "npm run -w access-api start",
+    "contracts:build": "forge build",
+    "contracts:test": "forge test",
+    "contracts:deploy": "forge script contracts/script/Deploy.s.sol --broadcast"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
