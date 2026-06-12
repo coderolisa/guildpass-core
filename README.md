@@ -1,91 +1,188 @@
 # GuildPass Core Monorepo (MVP)
 
-GuildPass provides wallet-based membership and token-gated community infrastructure.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-green?style=flat-square)](https://nodejs.org)
+[![GrantFox](https://img.shields.io/badge/GrantFox-open%20for%20contributions-orange?style=flat-square)](https://contribute.grantfox.xyz)
+
+GuildPass provides **wallet-based membership and token-gated community infrastructure** for the Web3 / EVM ecosystem.
+
 This monorepo contains a runnable MVP backend and protocol foundation. It is intentionally not feature-complete, but is real, demoable, and extendable.
+
+> **Part of the [Adamantine-Guild](https://github.com/Adamantine-Guild) project.**
+
+---
 
 ## Structure
 
-- apps/access-api – Fastify API (TypeScript, Prisma, PostgreSQL, OpenAPI)
-- packages/contracts – TS helpers for on-chain contract addresses/ABI
-- packages/shared-types – Shared types/enums for roles, membership, decisions
-- packages/policy-engine – Simple, explainable access policy engine
-- packages/sdk-lite – Minimal HTTP client for the API (optional)
-- contracts – Foundry Solidity project (Membership NFT + tests + deploy)
+| Path | Purpose |
+|---|---|
+| `apps/access-api` | Fastify REST API (TypeScript, Prisma, PostgreSQL, OpenAPI) |
+| `packages/contracts` | TypeScript helpers for on-chain contract addresses and ABIs |
+| `packages/shared-types` | Shared types and enums for roles, membership, and decisions |
+| `packages/policy-engine` | Simple, explainable access policy engine |
+| `packages/sdk-lite` | Minimal HTTP client for the access API |
+| `contracts/` | Foundry Solidity project (MembershipNFT + tests + deploy scripts) |
+
+---
 
 ## Quick Start
 
-1. Requirements: Node 18+, npm, Docker (for Postgres/Redis), Foundry (for contracts)
-2. Bootstrap services:
-   - `docker compose up -d`
-3. Install deps (workspace):
-   - `npm install`
-4. Generate Prisma client and migrate:
-   - `npm run -w access-api prisma:migrate`
-5. Seed DB:
-   - `npm run seed`
-6. Start API:
-   - `npm run dev`
-7. OpenAPI docs:
-   - http://localhost:3000/docs
+### Prerequisites
 
-## Contracts
+- Node.js 18+
+- npm 9+
+- Docker (for PostgreSQL and Redis)
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (for Solidity contracts)
 
-The MembershipNFT is a simple ERC-721 with expiry and suspension semantics, and admin-controlled mint/renew. It emits events suitable for off-chain indexing.
+### Steps
 
-- Build: `npm run contracts:build`
-- Test: `npm run contracts:test`
-- Deploy (example script): `npm run contracts:deploy`
+```bash
+# 1. Clone and enter the repo
+git clone https://github.com/Adamantine-Guild/guildpass-core.git
+cd guildpass-core
+
+# 2. Start PostgreSQL and Redis
+docker compose up -d
+
+# 3. Install dependencies
+npm install
+
+# 4. Set up environment variables
+cp .env.example .env
+# Edit .env — set DATABASE_URL, REDIS_URL, etc.
+
+# 5. Generate Prisma client and run migrations
+npm run -w access-api prisma:migrate
+
+# 6. Seed the database with sample data
+npm run seed
+
+# 7. Start the API in development mode
+npm run dev
+```
+
+OpenAPI docs available at: **http://localhost:3000/docs**
+
+---
+
+## Contracts (Solidity / Foundry)
+
+The `MembershipNFT` is a simple ERC-721 with expiry and suspension semantics, and admin-controlled mint/renew. It emits events suitable for off-chain indexing.
+
+```bash
+# Build contracts
+npm run contracts:build   # runs: forge build
+
+# Test contracts
+npm run contracts:test    # runs: forge test
+
+# Deploy (example script)
+npm run contracts:deploy  # runs: forge script contracts/script/Deploy.s.sol --broadcast
+```
 
 After deploying, set `MEMBERSHIP_NFT_ADDRESS` and `CHAIN_ID` in `.env`.
 
+---
+
 ## API Endpoints (MVP)
 
-- GET /v1/memberships/:wallet – Membership status summary by wallet
-- GET /v1/members/:wallet – Member profile (with membership/roles)
-- POST /v1/access/check – Access decision for { wallet, communityId, resource }
-- GET /v1/communities/:communityId/members – Admin member listing (simple)
+| Method | Path | Description |
+|---|---|---|
+| GET | `/v1/memberships/:wallet` | Membership status summary by wallet |
+| GET | `/v1/members/:wallet` | Member profile (with membership and roles) |
+| POST | `/v1/access/check` | Access decision for `{ wallet, communityId, resource }` |
+| GET | `/v1/communities/:communityId/members` | Admin member listing |
 
-Responses include allowed/denied plus human-readable and machine-readable reasons.
+Responses include `allowed`/`denied` plus human-readable and machine-readable reasons.
+
+---
 
 ## Data Model
 
-Prisma schema includes: communities, wallets, members, memberships, roles, access policies, profiles, badges (placeholder).
+Prisma schema includes: `communities`, `wallets`, `members`, `memberships`, `roles`, `access policies`, `profiles`, `badges` (placeholder).
+
+---
 
 ## Policy Engine
 
-Simple rules: PUBLIC, MEMBERS_ONLY, ADMINS_ONLY, CONTRIBUTORS_OR_ADMINS.
+Simple rules: `PUBLIC`, `MEMBERS_ONLY`, `ADMINS_ONLY`, `CONTRIBUTORS_OR_ADMINS`.
+
 Role resolution combines:
-- membership state (adds member role when active),
-- backend role assignments,
-- room for future manual override rules (TODO).
+- Membership state (adds `member` role when active)
+- Backend role assignments
+- Room for future manual override rules (TODO)
+
+---
+
+## Testing
+
+```bash
+# Policy engine unit tests
+npm run -w @guildpass/policy-engine test
+
+# All workspaces
+npm run test
+
+# TypeScript type checking
+npm run typecheck
+```
+
+---
+
+## Linting
+
+```bash
+npm run lint
+```
+
+---
+
+## Environment
+
+See [`.env.example`](./.env.example) for all required variables.
+
+---
 
 ## Deferred Areas (Intentionally Not Implemented)
 
 - Advanced governance permissions
 - Constitutional rule engine
-- Complex moderation workflows
-- Appeals/reinstatement
-- Rich reward distribution
-- Advanced streak logic
+- Complex moderation workflows / appeals / reinstatement
+- Rich reward distribution and advanced streak logic
 - Contribution scoring engine
 - Full event attendance ingestion
-- Multi-chain support
+- Multi-chain support (current: EVM only)
 - Advanced indexing pipeline
-- Complete external integrations
 
 Clear interfaces and TODOs are left where appropriate.
 
+---
+
 ## Development Notes
 
-- Business logic sits in services and the policy engine, not route handlers.
+- Business logic lives in services and the policy engine, not route handlers.
 - Contracts and API are aligned via shared types and simple event ABI.
 - The code aims to be small and understandable; extending should not require rewrites.
 
-## Testing
+---
 
-- Policy engine unit tests: `npm run -w @guildpass/policy-engine test`
-- Add additional tests per package/app as needed.
+## 🦊 Contributing via GrantFox
 
-## Environment
+This repository is listed on **[GrantFox](https://contribute.grantfox.xyz)** for open contributions.
 
-See `.env.example` for required variables.
+### How to contribute
+
+1. Browse open issues tagged [`good first issue`](https://github.com/Adamantine-Guild/guildpass-core/issues?q=label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/Adamantine-Guild/guildpass-core/issues?q=label%3A%22help+wanted%22).
+2. Apply for an issue on [GrantFox](https://contribute.grantfox.xyz) or comment on the GitHub issue.
+3. Fork the repo, create a feature branch, implement your change, open a PR.
+4. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
+
+### Maintainer resources
+
+- [Maintainer app](https://maintainer.grantfox.xyz)
+- [GrantFox docs](https://docs.grantfox.xyz)
+- Contact: maintainers@guildpass.xyz
+
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE).
